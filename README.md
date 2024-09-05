@@ -65,4 +65,43 @@ Follow these steps to install ArgoCD on your Windows machine with Rancher Deskto
     [Environment]::SetEnvironmentVariable("Path", "$env:Path;C:\Users\<yourusername>", "User")
     ```
     
-11. Use a sample application. Create a deployment
+11. Use a sample application `guestbook_app`. Create a name space in your cluster
+
+    ```shell
+     kubectl create ns guestbook
+    ```
+    After creating the name space create the application as project in ArgoCD using command line.
+    you can refer to `argoproj_application.yaml`. Remember to replace the github URL in the file.
+    ```shell
+    kubectl apply -f argoproj_application.yaml
+    ```
+
+    or run this command in your cli to create on the fly.
+    
+
+    ```shell
+    # Get the Github_URL something like this: https://github.com/sudhakarm/argocd-poc.git
+    HTTPS_GITHUB_URL=$(git remote show origin | sed -n 's/.*URL: \(https:\/\/github.com\/[^ ]*\).*/\1/p' | head -n 1)
+    
+    # Apply application
+    cat <<EOF | kubectl apply -f -
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+    name: guestbook
+    namespace: argocd
+    spec:
+    destination:
+        namespace: guestbook
+        server: https://kubernetes.default.svc
+    project: default
+    source:
+        repoURL: $HTTPS_GITHUB_URL
+        path: guestbook_app
+        targetRevision: master
+    EOF
+    ```
+
+12. After deploying application, check the ArgoCD UI in browser. You should be able to see new application in default project `https://localhost:10443/applications`
+
+13. Now make a change to the guestbook_app to see changes reflecting in the argoCD
